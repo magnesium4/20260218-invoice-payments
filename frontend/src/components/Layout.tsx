@@ -8,14 +8,16 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   return (
     <div>
-      <nav style={{ padding: "16px", borderBottom: "1px solid #ccc" }}>
-        <Link to="/invoices" style={{ marginRight: "16px" }}>
+      <nav className="app-nav">
+        <Link to="/invoices" className="app-nav-link">
           Invoices
         </Link>
-        <Link to="/invoices/new" style={{ marginRight: "16px" }}>
+        <Link to="/invoices/new" className="app-nav-link">
           New Invoice
         </Link>
-        <Link to="/customers/new">New Customer</Link>
+        <Link to="/customers/new" className="app-nav-link">
+          New Customer
+        </Link>
       </nav>
       <main style={{ padding: "16px" }}>
         {children}

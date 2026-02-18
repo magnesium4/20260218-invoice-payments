@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getInvoice, addPayment, postInvoice, voidInvoice } from "../api/invoices";
 import { getCustomers } from "../api/customers";
@@ -9,7 +9,6 @@ import { formatCurrency, formatDate } from "../utils/format";
 
 export default function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [paymentAmount, setPaymentAmount] = useState<string>("");
   const [paymentError, setPaymentError] = useState<string>("");
@@ -99,20 +98,43 @@ export default function InvoiceDetailPage() {
     paymentMutation.mutate({ amount: paymentAmount });
   };
 
-  if (isLoading) return <div style={{ padding: "24px" }}>Loading invoice...</div>;
-  if (error) return <div style={{ padding: "24px", color: "red" }}>Error loading invoice</div>;
-  if (!invoice) return <div style={{ padding: "24px" }}>Invoice not found</div>;
+  if (isLoading) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "1000px", margin: "0 auto" }}>
+        <div className="loading-state">
+          <span className="loading-spinner" style={{ display: "block", margin: "0 auto 12px" }} />
+          Loading invoice...
+        </div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "1000px", margin: "0 auto" }}>
+        <div style={{ padding: "16px", backgroundColor: "#fee2e2", color: "#991b1b", borderRadius: "8px" }}>
+          Error loading invoice
+        </div>
+      </div>
+    );
+  }
+  if (!invoice) {
+    return (
+      <div style={{ padding: "24px", maxWidth: "1000px", margin: "0 auto" }}>
+        <div className="empty-state">Invoice not found</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: "24px", maxWidth: "1000px", margin: "0 auto" }}>
-      <Link to="/invoices" style={{ color: "#3b82f6", textDecoration: "none", marginBottom: "16px", display: "inline-block" }}>
+      <Link to="/invoices" className="app-link" style={{ marginBottom: "16px", display: "inline-block" }}>
         ← Back to Invoices
       </Link>
 
-      <div style={{ backgroundColor: "white", borderRadius: "8px", padding: "24px", marginTop: "16px" }}>
+      <div className="app-card" style={{ marginTop: "16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "24px" }}>
           <div>
-            <h1 style={{ margin: "0 0 8px 0" }}>Invoice #{invoice.id}</h1>
+            <h1 className="page-title">Invoice #{invoice.id}</h1>
             <p style={{ margin: 0, color: "#6b7280" }}>Customer: {customerName || `Customer ${invoice.customer_id}`}</p>
           </div>
           <StatusBadge status={invoice.status} />
@@ -145,8 +167,8 @@ export default function InvoiceDetailPage() {
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "24px", marginTop: "24px" }}>
             <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px" }}>Record Payment</h2>
             <form onSubmit={handlePaymentSubmit}>
-              <div style={{ display: "flex", gap: "12px", alignItems: "start" }}>
-                <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", gap: "50px", alignItems: "end" }}>
+                <div style={{ width: "300px" }}>
                   <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>
                     Amount ({invoice.currency})
                   </label>
@@ -171,17 +193,8 @@ export default function InvoiceDetailPage() {
                 <div style={{ display: "flex", alignItems: "end" }}>
                   <button
                     type="submit"
+                    className="btn-success"
                     disabled={paymentMutation.isPending}
-                    style={{
-                      padding: "8px 24px",
-                      backgroundColor: "#10b981",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      fontWeight: "500",
-                      cursor: paymentMutation.isPending ? "not-allowed" : "pointer",
-                      opacity: paymentMutation.isPending ? 0.6 : 1,
-                    }}
                   >
                     {paymentMutation.isPending ? "Recording..." : "Record Payment"}
                   </button>
@@ -215,36 +228,18 @@ export default function InvoiceDetailPage() {
               {invoice.status === "DRAFT" && (
                 <button
                   type="button"
+                  className="btn-primary"
                   onClick={() => { setActionError(""); postMutation.mutate(); }}
                   disabled={postMutation.isPending}
-                  style={{
-                    padding: "8px 20px",
-                    backgroundColor: "#3b82f6",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontWeight: "500",
-                    cursor: postMutation.isPending ? "not-allowed" : "pointer",
-                    opacity: postMutation.isPending ? 0.6 : 1,
-                  }}
                 >
                   {postMutation.isPending ? "Posting..." : "Send for payment"}
                 </button>
               )}
               <button
                 type="button"
+                className="btn-secondary"
                 onClick={() => { setActionError(""); voidMutation.mutate(); }}
                 disabled={voidMutation.isPending}
-                style={{
-                  padding: "8px 20px",
-                  backgroundColor: "#6b7280",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  fontWeight: "500",
-                  cursor: voidMutation.isPending ? "not-allowed" : "pointer",
-                  opacity: voidMutation.isPending ? 0.6 : 1,
-                }}
               >
                 {voidMutation.isPending ? "Cancelling..." : "Cancel invoice"}
               </button>
@@ -261,8 +256,9 @@ export default function InvoiceDetailPage() {
         <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "24px", marginTop: "24px" }}>
           <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px" }}>Payment History</h2>
           {invoice.payments.length === 0 ? (
-            <p style={{ color: "#6b7280" }}>No payments recorded</p>
+            <p className="empty-state" style={{ margin: 0 }}>No payments recorded</p>
           ) : (
+            <div className="app-table-wrapper" style={{ marginTop: "8px" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ backgroundColor: "#f9fafb" }}>
@@ -285,6 +281,7 @@ export default function InvoiceDetailPage() {
                 </tr>
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

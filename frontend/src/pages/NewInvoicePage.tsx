@@ -71,22 +71,15 @@ export default function NewInvoicePage() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "600px", margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "24px" }}>Create New Invoice</h1>
+      <h1 className="page-title" style={{ marginBottom: "24px" }}>Create New Invoice</h1>
 
-      <form onSubmit={handleSubmit} style={{ backgroundColor: "white", borderRadius: "8px", padding: "24px" }}>
+      <form onSubmit={handleSubmit} className="app-card">
         <div style={{ marginBottom: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
             <label style={{ fontWeight: "500" }}>
               Customer <span style={{ color: "red" }}>*</span>
             </label>
-            <Link
-              to="/customers/new"
-              style={{
-                fontSize: "14px",
-                color: "#3b82f6",
-                textDecoration: "none",
-              }}
-            >
+            <Link to="/customers/new" className="app-link" style={{ fontSize: "14px" }}>
               + New Customer
             </Link>
           </div>
@@ -141,21 +134,36 @@ export default function NewInvoicePage() {
             <label style={{ display: "block", marginBottom: "6px", fontWeight: "500" }}>
               Currency <span style={{ color: "red" }}>*</span>
             </label>
-            <select
+            <input
+              type="text"
+              list="currency-list"
               value={formData.currency}
-              onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, currency: e.target.value.toUpperCase().slice(0, 3) })}
+              placeholder="e.g. USD, EUR, GBP"
+              maxLength={3}
               style={{
                 width: "100%",
                 padding: "8px 12px",
                 borderRadius: "6px",
                 border: errors.currency ? "1px solid #ef4444" : "1px solid #d1d5db",
+                textTransform: "uppercase",
               }}
               required
-            >
-              <option value="USD">USD</option>
-              <option value="CAD">CAD</option>
-              <option value="EUR">EUR</option>
-            </select>
+            />
+            <datalist id="currency-list">
+              <option value="USD" />
+              <option value="EUR" />
+              <option value="GBP" />
+              <option value="CAD" />
+              <option value="AUD" />
+              <option value="CHF" />
+              <option value="JPY" />
+              <option value="CNY" />
+              <option value="INR" />
+              <option value="MXN" />
+              <option value="BRL" />
+              <option value="ZAR" />
+            </datalist>
             {errors.currency && <div style={{ marginTop: "4px", color: "#ef4444", fontSize: "14px" }}>{errors.currency}</div>}
           </div>
         </div>
@@ -207,35 +215,10 @@ export default function NewInvoicePage() {
         )}
 
         <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            onClick={() => navigate("/invoices")}
-            style={{
-              padding: "8px 24px",
-              backgroundColor: "#f3f4f6",
-              color: "#374151",
-              border: "none",
-              borderRadius: "6px",
-              fontWeight: "500",
-              cursor: "pointer",
-            }}
-          >
+          <button type="button" className="btn-ghost" onClick={() => navigate("/invoices")}>
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={createMutation.isPending}
-            style={{
-              padding: "8px 24px",
-              backgroundColor: "#3b82f6",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              fontWeight: "500",
-              cursor: createMutation.isPending ? "not-allowed" : "pointer",
-              opacity: createMutation.isPending ? 0.6 : 1,
-            }}
-          >
+          <button type="submit" className="btn-primary" disabled={createMutation.isPending}>
             {createMutation.isPending ? "Creating..." : "Create Invoice"}
           </button>
         </div>

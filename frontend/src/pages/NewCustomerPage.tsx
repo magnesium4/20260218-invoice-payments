@@ -40,9 +40,9 @@ export default function NewCustomerPage() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "600px", margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "24px" }}>Create New Customer</h1>
+      <h1 className="page-title" style={{ marginBottom: "24px" }}>Create New Customer</h1>
 
-      <form onSubmit={handleSubmit} style={{ backgroundColor: "white", borderRadius: "8px", padding: "24px" }}>
+      <form onSubmit={handleSubmit} className="app-card">
         <div style={{ marginBottom: "20px" }}>
           <label style={{ display: "block", marginBottom: "6px", fontWeight: "500" }}>
             Customer Name <span style={{ color: "red" }}>*</span>
@@ -67,35 +67,10 @@ export default function NewCustomerPage() {
         </div>
 
         <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            onClick={() => navigate("/invoices/new")}
-            style={{
-              padding: "8px 24px",
-              backgroundColor: "#f3f4f6",
-              color: "#374151",
-              border: "none",
-              borderRadius: "6px",
-              fontWeight: "500",
-              cursor: "pointer",
-            }}
-          >
+          <button type="button" className="btn-ghost" onClick={() => navigate("/invoices/new")}>
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={createMutation.isPending}
-            style={{
-              padding: "8px 24px",
-              backgroundColor: "#3b82f6",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              fontWeight: "500",
-              cursor: createMutation.isPending ? "not-allowed" : "pointer",
-              opacity: createMutation.isPending ? 0.6 : 1,
-            }}
-          >
+          <button type="submit" className="btn-primary" disabled={createMutation.isPending}>
             {createMutation.isPending ? "Creating..." : "Create Customer"}
           </button>
         </div>

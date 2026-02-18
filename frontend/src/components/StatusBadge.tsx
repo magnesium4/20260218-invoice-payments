@@ -19,6 +19,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
         borderRadius: "12px",
         fontSize: "12px",
         fontWeight: "600",
+        letterSpacing: "0.05em",
         backgroundColor: `${colors[status]}20`,
         color: colors[status],
         textTransform: "uppercase",

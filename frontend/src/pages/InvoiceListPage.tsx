@@ -36,18 +36,8 @@ export default function InvoiceListPage() {
   return (
     <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-        <h1>Invoices</h1>
-        <Link
-          to="/invoices/new"
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#3b82f6",
-            color: "white",
-            borderRadius: "6px",
-            textDecoration: "none",
-            fontWeight: "500",
-          }}
-        >
+        <h1 className="page-title">Invoices</h1>
+        <Link to="/invoices/new" className="btn-primary">
           + New Invoice
         </Link>
       </div>
@@ -142,12 +132,17 @@ export default function InvoiceListPage() {
       )}
 
       {/* Loading State */}
-      {isLoading && <div style={{ padding: "24px", textAlign: "center" }}>Loading invoices...</div>}
+      {isLoading && (
+        <div className="loading-state">
+          <span className="loading-spinner" style={{ display: "block", margin: "0 auto 12px" }} />
+          Loading invoices...
+        </div>
+      )}
 
       {/* Invoice Table */}
       {!isLoading && !error && (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "white", borderRadius: "8px", overflow: "hidden" }}>
+        <div className="app-table-wrapper">
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ backgroundColor: "#f3f4f6" }}>
                 <th style={{ padding: "12px", textAlign: "left", fontWeight: "600", fontSize: "14px" }}>Customer</th>
@@ -161,7 +156,7 @@ export default function InvoiceListPage() {
             <tbody>
               {invoices.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: "24px", textAlign: "center", color: "#6b7280" }}>
+                  <td colSpan={6} className="empty-state">
                     No invoices found
                   </td>
                 </tr>
@@ -178,14 +173,7 @@ export default function InvoiceListPage() {
                     <td style={{ padding: "12px" }}>{formatDate(invoice.issued_at)}</td>
                     <td style={{ padding: "12px" }}>{formatDate(invoice.due_at)}</td>
                     <td style={{ padding: "12px", textAlign: "center" }}>
-                      <Link
-                        to={`/invoices/${invoice.id}`}
-                        style={{
-                          color: "#3b82f6",
-                          textDecoration: "none",
-                          fontWeight: "500",
-                        }}
-                      >
+                      <Link to={`/invoices/${invoice.id}`} className="app-link">
                         View
                       </Link>
                     </td>

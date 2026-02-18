@@ -1,0 +1,194 @@
+/* src/styles/global.css */
+html {
+    box-sizing: border-box;
+  }
+  *, *::before, *::after {
+    box-sizing: inherit;
+  }
+  
+  body {
+    color: #18181b;
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background-color: #f8fafc;
+  }
+
+  /* Form controls focus */
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+
+  /* Cards */
+  .app-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    padding: 8px 16px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.15s ease, filter 0.15s ease;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: #2563eb;
+  }
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn-success {
+    padding: 8px 24px;
+    background-color: #10b981;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .btn-success:hover:not(:disabled) {
+    background-color: #059669;
+  }
+  .btn-success:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    padding: 8px 20px;
+    background-color: #6b7280;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: #4b5563;
+  }
+  .btn-secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    padding: 8px 24px;
+    background-color: #f3f4f6;
+    color: #374151;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .btn-ghost:hover {
+    background-color: #e5e7eb;
+  }
+
+  /* Text links */
+  .app-link {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+  }
+  .app-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+
+  /* Table wrapper with shadow */
+  .app-table-wrapper {
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    background-color: white;
+  }
+
+  .app-table-wrapper table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .app-table-wrapper tbody tr {
+    transition: background-color 0.12s ease;
+  }
+  .app-table-wrapper tbody tr:hover {
+    background-color: #fafafa;
+  }
+
+  /* Page title */
+  .page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+  }
+
+  /* Loading state */
+  .loading-state {
+    padding: 32px 24px;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  .loading-spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-bottom: 12px;
+    vertical-align: middle;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Empty state */
+  .empty-state {
+    padding: 24px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+  }
+
+  /* Nav */
+  .app-nav {
+    padding: 16px 24px;
+    border-bottom: 1px solid #e4e4e7;
+    background-color: #fafafa;
+    font-weight: 500;
+  }
+
+  .app-nav-link {
+    margin-right: 20px;
+    color: #18181b;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .app-nav-link:hover {
+    color: #2563eb;
+  }
+
+  .app-nav-link:last-child {
+    margin-right: 0;
+  }
