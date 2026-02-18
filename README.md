@@ -1,6 +1,6 @@
 # Invoice & Payments
 
-A full-stack application for managing **invoices** and **payments**: create invoices for customers, post them for payment, record full or partial payments, and void or track them through to paid.
+A full-stack application for managing **invoices** and **payments**: create invoices for customers, post them for payment, record full or partial payments, delete drafts, void pending invoices, or track them through to paid.
 
 ---
 
@@ -9,7 +9,7 @@ A full-stack application for managing **invoices** and **payments**: create invo
 - **Customers** — Create and list customers; associate invoices with a customer.
 - **Invoices** — Create invoices (amount, currency, issued/due dates). Invoices move through statuses: **DRAFT** → **PENDING** → **PAID** or **VOID**.
 - **Payments** — Record payments against a **PENDING** invoice. Partial payments are allowed; when the sum of payments equals the invoice amount, the invoice becomes **PAID**.
-- **UI** — List invoices with filters (status, customer, date range), view invoice details and payment history, create invoices, record payments, post drafts, and void invoices.
+- **UI** — List invoices with filters (status, customer, date range), view invoice details and payment history, create invoices, record payments, post or delete drafts, and void pending invoices.
 
 ---
 
@@ -27,12 +27,12 @@ A full-stack application for managing **invoices** and **payments**: create invo
 
 ### Invoice lifecycle
 
-- **DRAFT** — Newly created; not yet sent for payment. Editable in spirit (this app creates in DRAFT; no edit endpoint). Cannot accept payments.
-- **PENDING** — “Sent for payment.” Accepts payments. Reached by **posting** a DRAFT (`POST /invoices/{id}/post`).
+- **DRAFT** — Newly created; not yet sent for payment. Cannot accept payments. **DRAFT invoices can be deleted** (removed from the DB via `DELETE /invoices/{id}`).
+- **PENDING** — “Sent for payment.” Accepts payments. Reached by **posting** a DRAFT (`POST /invoices/{id}/post`). **PENDING invoices can be voided** (status set to VOID); they are not deleted.
 - **PAID** — Sum of payments equals invoice amount. No further payments allowed.
-- **VOID** — Cancelled. Only DRAFT or PENDING can be voided; PAID cannot be voided. No payments allowed.
+- **VOID** — Cancelled (status only; row remains). Only PENDING can be voided; PAID cannot be voided. No payments allowed.
 
-So the assumed flow is: create (DRAFT) → post (PENDING) → record payments until PAID, or void from DRAFT/PENDING.
+Flow: create (DRAFT) → post (PENDING) → record payments until PAID, or **delete** a DRAFT or **void** a PENDING.
 
 ### Payments
 
@@ -52,9 +52,10 @@ So the assumed flow is: create (DRAFT) → post (PENDING) → record payments un
 - **Customer required** — Every invoice has a required `customer_id` (FK to customers). Deleting customers is out of scope; referential integrity is assumed.
 - **List and filter** — Invoices can be listed globally or per customer, with optional filters: `status`, `customer_id`, and `from`/`to` on `issued_at`.
 
-### Void and post
+### Delete, void, and post
 
-- **Void** — Allowed only for DRAFT or PENDING. PAID invoices cannot be voided; already-VOID invoices return an error.
+- **Delete** — Only **DRAFT** invoices can be deleted (`DELETE /invoices/{id}`). The invoice and any related data are removed from the DB. PENDING/PAID/VOID cannot be deleted.
+- **Void** — Only **PENDING** invoices can be voided. The invoice status is set to VOID; the row is kept. DRAFT invoices cannot be voided (use delete instead); PAID and already-VOID return an error.
 - **Post** — Only a DRAFT invoice can be posted; posting sets status to PENDING.
 
 ---

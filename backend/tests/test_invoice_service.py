@@ -7,6 +7,7 @@ from app.api.services.invoice_service import (
     get_all_invoices,
     post_invoice,
     void_invoice,
+    delete_invoice,
     InvoiceError,
 )
 from app.api.schemas.invoice import InvoiceCreate
@@ -105,6 +106,26 @@ def test_void_invoice_already_void(db_session, sample_invoice):
     with pytest.raises(InvoiceError) as exc_info:
         void_invoice(db_session, sample_invoice.id)
     assert "void" in str(exc_info.value).lower()
+
+
+def test_void_invoice_draft_rejected(db_session, sample_draft_invoice):
+    """Test void_invoice raises for DRAFT (drafts must be deleted, not voided)"""
+    with pytest.raises(InvoiceError) as exc_info:
+        void_invoice(db_session, sample_draft_invoice.id)
+    assert "draft" in str(exc_info.value).lower()
+
+
+def test_delete_invoice_success(db_session, sample_draft_invoice):
+    """Test delete_invoice removes a DRAFT invoice from the DB"""
+    delete_invoice(db_session, sample_draft_invoice.id)
+    assert get_invoice(db_session, sample_draft_invoice.id) is None
+
+
+def test_delete_invoice_pending_rejected(db_session, sample_invoice):
+    """Test delete_invoice raises for PENDING invoice"""
+    with pytest.raises(InvoiceError) as exc_info:
+        delete_invoice(db_session, sample_invoice.id)
+    assert "draft" in str(exc_info.value).lower()
 
 
 def test_get_all_invoices_filter_by_status(db_session, sample_invoice):

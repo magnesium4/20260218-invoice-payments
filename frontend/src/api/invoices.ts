@@ -31,6 +31,10 @@ export async function voidInvoice(id: number): Promise<Invoice> {
   return data;
 }
 
+export async function deleteInvoice(id: number): Promise<void> {
+  await api.delete(`/invoices/${id}`);
+}
+
 export async function addPayment(invoiceId: number, payload: PaymentCreate): Promise<Payment> {
   const { data } = await api.post<Payment>(`/invoices/${invoiceId}/payments`, payload);
   return data;

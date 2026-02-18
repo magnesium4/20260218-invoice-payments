@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getInvoice, addPayment, postInvoice, voidInvoice } from "../api/invoices";
+import { getInvoice, addPayment, postInvoice, voidInvoice, deleteInvoice } from "../api/invoices";
 import { getCustomers } from "../api/customers";
 import type { PaymentCreate } from "../api/types";
 import StatusBadge from "../components/StatusBadge";
@@ -9,6 +9,7 @@ import { formatCurrency, formatDate } from "../utils/format";
 
 export default function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [paymentAmount, setPaymentAmount] = useState<string>("");
   const [paymentError, setPaymentError] = useState<string>("");
@@ -56,7 +57,7 @@ export default function InvoiceDetailPage() {
     },
   });
 
-  // Void invoice (→ VOID)
+  // Void invoice (PENDING → VOID)
   const voidMutation = useMutation({
     mutationFn: () => voidInvoice(invoiceId),
     onSuccess: () => {
@@ -66,6 +67,18 @@ export default function InvoiceDetailPage() {
     },
     onError: (err: any) => {
       setActionError(err.response?.data?.detail || err.message || "Failed to cancel invoice");
+    },
+  });
+
+  // Delete draft invoice (removed from DB)
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteInvoice(invoiceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      navigate("/invoices");
+    },
+    onError: (err: any) => {
+      setActionError(err.response?.data?.detail || err.message || "Failed to delete invoice");
     },
   });
 
@@ -221,28 +234,45 @@ export default function InvoiceDetailPage() {
           </div>
         )}
 
-        {/* Action buttons: Send for payment / Cancel invoice */}
+        {/* Action buttons: DRAFT = Send for payment / Delete draft; PENDING = Cancel invoice */}
         {(invoice.status === "DRAFT" || invoice.status === "PENDING") && (
           <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: "24px", marginTop: "24px" }}>
             <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
               {invoice.status === "DRAFT" && (
+                <>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => { setActionError(""); postMutation.mutate(); }}
+                    disabled={postMutation.isPending}
+                  >
+                    {postMutation.isPending ? "Posting..." : "Send for payment"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => {
+                      if (window.confirm("Delete this draft invoice? This cannot be undone.")) {
+                        setActionError("");
+                        deleteMutation.mutate();
+                      }
+                    }}
+                    disabled={deleteMutation.isPending}
+                  >
+                    {deleteMutation.isPending ? "Deleting..." : "Delete draft"}
+                  </button>
+                </>
+              )}
+              {invoice.status === "PENDING" && (
                 <button
                   type="button"
-                  className="btn-primary"
-                  onClick={() => { setActionError(""); postMutation.mutate(); }}
-                  disabled={postMutation.isPending}
+                  className="btn-secondary"
+                  onClick={() => { setActionError(""); voidMutation.mutate(); }}
+                  disabled={voidMutation.isPending}
                 >
-                  {postMutation.isPending ? "Posting..." : "Send for payment"}
+                  {voidMutation.isPending ? "Cancelling..." : "Cancel invoice"}
                 </button>
               )}
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => { setActionError(""); voidMutation.mutate(); }}
-                disabled={voidMutation.isPending}
-              >
-                {voidMutation.isPending ? "Cancelling..." : "Cancel invoice"}
-              </button>
             </div>
             {actionError && (
               <div style={{ marginTop: "12px", padding: "8px", backgroundColor: "#fee2e2", color: "#991b1b", borderRadius: "6px", fontSize: "14px" }}>

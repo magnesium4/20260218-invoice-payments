@@ -47,8 +47,8 @@ def post_invoice(db: Session, invoice_id: int) -> Invoice:
     return invoice
 
 
-def void_invoice(db: Session, invoice_id: int) -> Invoice:
-    """Cancel invoice: set status to VOID (only DRAFT or PENDING)."""
+def delete_invoice(db: Session, invoice_id: int) -> None:
+    """Delete an invoice from the DB. Only DRAFT invoices can be deleted."""
     invoice = db.scalar(
         select(Invoice)
         .where(Invoice.id == invoice_id)
@@ -56,6 +56,23 @@ def void_invoice(db: Session, invoice_id: int) -> Invoice:
     )
     if not invoice:
         raise InvoiceError(f"Invoice {invoice_id} not found")
+    if invoice.status != InvoiceStatus.DRAFT:
+        raise InvoiceError("Only draft invoices can be deleted. Use void to cancel a pending invoice.")
+    db.delete(invoice)
+    db.commit()
+
+
+def void_invoice(db: Session, invoice_id: int) -> Invoice:
+    """Cancel invoice: set status to VOID. Only PENDING invoices can be voided."""
+    invoice = db.scalar(
+        select(Invoice)
+        .where(Invoice.id == invoice_id)
+        .options(selectinload(Invoice.payments))
+    )
+    if not invoice:
+        raise InvoiceError(f"Invoice {invoice_id} not found")
+    if invoice.status == InvoiceStatus.DRAFT:
+        raise InvoiceError("Draft invoices can be deleted, not voided.")
     if invoice.status == InvoiceStatus.PAID:
         raise InvoiceError("Cannot void a paid invoice")
     if invoice.status == InvoiceStatus.VOID:

@@ -13,6 +13,7 @@ from app.api.services.invoice_service import (
     get_all_invoices,
     post_invoice,
     void_invoice,
+    delete_invoice,
 )
 from app.api.services.invoice_service import InvoiceError
 from app.api.services.payment_service import record_payment, PaymentError
@@ -65,10 +66,19 @@ def post_invoice_endpoint(invoice_id: int, db: Session = Depends(get_db)):
 
 @router.post("/{invoice_id}/void", response_model=InvoiceResponse)
 def void_invoice_endpoint(invoice_id: int, db: Session = Depends(get_db)):
-    """Cancel invoice (set status to VOID)."""
+    """Cancel invoice (set status to VOID). Only PENDING invoices can be voided."""
     try:
         invoice = void_invoice(db, invoice_id)
         return invoice
+    except InvoiceError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/{invoice_id}", status_code=204)
+def delete_invoice_endpoint(invoice_id: int, db: Session = Depends(get_db)):
+    """Delete an invoice from the DB. Only DRAFT invoices can be deleted."""
+    try:
+        delete_invoice(db, invoice_id)
     except InvoiceError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

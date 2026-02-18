@@ -160,6 +160,28 @@ def test_void_invoice_already_void(client, sample_invoice):
     assert "void" in response.json()["detail"].lower()
 
 
+def test_void_invoice_draft_rejected(client, sample_draft_invoice):
+    """Test voiding a DRAFT invoice returns 400 (drafts must be deleted, not voided)"""
+    response = client.post(f"/invoices/{sample_draft_invoice.id}/void")
+    assert response.status_code == 400
+    assert "draft" in response.json()["detail"].lower()
+
+
+def test_delete_invoice_success(client, sample_draft_invoice):
+    """Test deleting a DRAFT invoice returns 204 and removes it from DB"""
+    response = client.delete(f"/invoices/{sample_draft_invoice.id}")
+    assert response.status_code == 204
+    get_response = client.get(f"/invoices/{sample_draft_invoice.id}")
+    assert get_response.status_code == 404
+
+
+def test_delete_invoice_pending_rejected(client, sample_invoice):
+    """Test deleting a PENDING invoice returns 400"""
+    response = client.delete(f"/invoices/{sample_invoice.id}")
+    assert response.status_code == 400
+    assert "draft" in response.json()["detail"].lower()
+
+
 def test_list_invoices_filter_by_customer(client, sample_invoice, sample_customer):
     """Test filtering invoices by customer_id"""
     response = client.get(f"/invoices?customer_id={sample_customer.id}")
