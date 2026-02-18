@@ -5,12 +5,13 @@ from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.db.models.invoice import InvoiceStatus
-from app.api.schemas.invoice import InvoiceCreate, InvoiceResponse
+from app.api.schemas.invoice import InvoiceCreate, InvoiceResponse, InvoiceDraftUpdate
 from app.api.schemas.payment import PaymentCreate, PaymentResponse
 from app.api.services.invoice_service import (
     create_invoice,
     get_invoice,
     get_all_invoices,
+    update_invoice,
     post_invoice,
     void_invoice,
     delete_invoice,
@@ -53,6 +54,21 @@ def get_invoice_endpoint(
     if not invoice:
         raise HTTPException(status_code=404, detail=f"Invoice {invoice_id} not found")
     return invoice
+
+
+@router.patch("/{invoice_id}", response_model=InvoiceResponse)
+def update_invoice_endpoint(
+    invoice_id: int,
+    data: InvoiceDraftUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update a DRAFT invoice (amount, currency, issued_at, due_at). Only DRAFT can be updated."""
+    try:
+        invoice = update_invoice(db, invoice_id, data)
+        return invoice
+    except InvoiceError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.post("/{invoice_id}/post", response_model=InvoiceResponse)
 def post_invoice_endpoint(invoice_id: int, db: Session = Depends(get_db)):

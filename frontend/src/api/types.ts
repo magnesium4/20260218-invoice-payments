@@ -29,6 +29,14 @@ export type InvoiceCreate = {
   status?: InvoiceStatus;
 };
 
+/** Fields that can be updated on a DRAFT invoice */
+export type InvoiceDraftUpdate = {
+  amount?: string;
+  currency?: string;
+  issued_at?: string;
+  due_at?: string;
+};
+
 export type PaymentCreate = {
   amount: string;
   paid_at?: string;

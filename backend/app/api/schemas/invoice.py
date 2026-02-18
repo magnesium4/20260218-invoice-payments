@@ -23,6 +23,14 @@ class InvoiceUpdate(BaseModel):
     status: Optional[InvoiceStatus] = None
 
 
+class InvoiceDraftUpdate(BaseModel):
+    """Update editable fields for a DRAFT invoice (amount, currency, dates)."""
+    amount: Optional[Decimal] = Field(None, gt=0, description="Invoice amount must be positive")
+    currency: Optional[str] = Field(None, min_length=3, max_length=3)
+    issued_at: Optional[datetime] = None
+    due_at: Optional[datetime] = None
+
+
 class PaymentResponse(BaseModel):
     id: int
     invoice_id: int

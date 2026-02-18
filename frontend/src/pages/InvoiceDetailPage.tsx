@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getInvoice, addPayment, postInvoice, voidInvoice, deleteInvoice } from "../api/invoices";
+import { getInvoice, addPayment, postInvoice, voidInvoice, deleteInvoice, updateInvoice } from "../api/invoices";
 import { getCustomers } from "../api/customers";
 import type { PaymentCreate } from "../api/types";
 import StatusBadge from "../components/StatusBadge";
@@ -14,6 +14,12 @@ export default function InvoiceDetailPage() {
   const [paymentAmount, setPaymentAmount] = useState<string>("");
   const [paymentError, setPaymentError] = useState<string>("");
   const [actionError, setActionError] = useState<string>("");
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [editAmount, setEditAmount] = useState("");
+  const [editCurrency, setEditCurrency] = useState("");
+  const [editIssuedAt, setEditIssuedAt] = useState("");
+  const [editDueAt, setEditDueAt] = useState("");
+  const [editError, setEditError] = useState("");
 
   const invoiceId = Number(id);
 
@@ -82,6 +88,21 @@ export default function InvoiceDetailPage() {
     },
   });
 
+  // Update draft invoice (amount, currency, dates)
+  const updateMutation = useMutation({
+    mutationFn: (payload: { amount: string; currency: string; issued_at: string; due_at: string }) =>
+      updateInvoice(invoiceId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoice", invoiceId] });
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      setIsEditingDraft(false);
+      setEditError("");
+    },
+    onError: (err: any) => {
+      setEditError(err.response?.data?.detail || err.message || "Failed to update invoice");
+    },
+  });
+
   const customerMap = new Map(customers.map((c) => [c.id, c.name]));
   const customerName = invoice ? customerMap.get(invoice.customer_id) : null;
 
@@ -109,6 +130,36 @@ export default function InvoiceDetailPage() {
     }
 
     paymentMutation.mutate({ amount: paymentAmount });
+  };
+
+  const startEditingDraft = () => {
+    if (!invoice) return;
+    setEditAmount(invoice.amount);
+    setEditCurrency(invoice.currency);
+    setEditIssuedAt(invoice.issued_at.slice(0, 10));
+    setEditDueAt(invoice.due_at.slice(0, 10));
+    setEditError("");
+    setIsEditingDraft(true);
+  };
+
+  const handleEditDraftSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditError("");
+    const amount = parseFloat(editAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setEditError("Amount must be positive");
+      return;
+    }
+    if (editDueAt < editIssuedAt) {
+      setEditError("Due date must be on or after issued date");
+      return;
+    }
+    updateMutation.mutate({
+      amount: editAmount,
+      currency: editCurrency,
+      issued_at: new Date(editIssuedAt).toISOString(),
+      due_at: new Date(editDueAt).toISOString(),
+    });
   };
 
   if (isLoading) {
@@ -153,26 +204,108 @@ export default function InvoiceDetailPage() {
           <StatusBadge status={invoice.status} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }}>
-          <div>
-            <h3 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#6b7280" }}>Amount</h3>
-            <p style={{ fontSize: "24px", fontWeight: "700", margin: 0 }}>{formatCurrency(invoice.amount, invoice.currency)}</p>
-          </div>
-          <div>
-            <h3 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#6b7280" }}>Remaining Balance</h3>
-            <p style={{ fontSize: "24px", fontWeight: "700", margin: 0, color: remainingBalance > 0 ? "#ef4444" : "#10b981" }}>
-              {formatCurrency(remainingBalance.toString(), invoice.currency)}
-            </p>
-          </div>
-          <div>
-            <h3 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#6b7280" }}>Issued</h3>
-            <p style={{ margin: 0 }}>{formatDate(invoice.issued_at)}</p>
-          </div>
-          <div>
-            <h3 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#6b7280" }}>Due</h3>
-            <p style={{ margin: 0 }}>{formatDate(invoice.due_at)}</p>
-          </div>
-        </div>
+        {invoice.status === "DRAFT" && isEditingDraft ? (
+          <form onSubmit={handleEditDraftSubmit} style={{ marginBottom: "24px" }}>
+            <h3 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "#6b7280" }}>Edit draft</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>Amount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={editAmount}
+                  onChange={(e) => setEditAmount(e.target.value)}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #d1d5db" }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>Currency</label>
+                <input
+                  type="text"
+                  list="currency-list-edit"
+                  value={editCurrency}
+                  onChange={(e) => setEditCurrency(e.target.value.toUpperCase().slice(0, 3))}
+                  maxLength={3}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #d1d5db", textTransform: "uppercase" }}
+                  required
+                />
+                <datalist id="currency-list-edit">
+                  <option value="USD" /><option value="EUR" /><option value="GBP" /><option value="CAD" />
+                </datalist>
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>Issued date</label>
+                <input
+                  type="date"
+                  value={editIssuedAt}
+                  onChange={(e) => setEditIssuedAt(e.target.value)}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #d1d5db" }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", marginBottom: "4px", fontSize: "14px", fontWeight: "500" }}>Due date</label>
+                <input
+                  type="date"
+                  value={editDueAt}
+                  onChange={(e) => setEditDueAt(e.target.value)}
+                  style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid #d1d5db" }}
+                  required
+                />
+              </div>
+            </div>
+            {editError && (
+              <div style={{ marginBottom: "12px", padding: "8px", backgroundColor: "#fee2e2", color: "#991b1b", borderRadius: "6px", fontSize: "14px" }}>
+                {editError}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button type="submit" className="btn-primary" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? "Saving..." : "Save changes"}
+              </button>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => { setIsEditingDraft(false); setEditError(""); }}
+                disabled={updateMutation.isPending}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }}>
+              <div>
+                <h3 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#6b7280" }}>Amount</h3>
+                <p style={{ fontSize: "24px", fontWeight: "700", margin: 0 }}>{formatCurrency(invoice.amount, invoice.currency)}</p>
+              </div>
+              <div>
+                <h3 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#6b7280" }}>Remaining Balance</h3>
+                <p style={{ fontSize: "24px", fontWeight: "700", margin: 0, color: remainingBalance > 0 ? "#ef4444" : "#10b981" }}>
+                  {formatCurrency(remainingBalance.toString(), invoice.currency)}
+                </p>
+              </div>
+              <div>
+                <h3 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#6b7280" }}>Issued</h3>
+                <p style={{ margin: 0 }}>{formatDate(invoice.issued_at)}</p>
+              </div>
+              <div>
+                <h3 style={{ fontSize: "14px", fontWeight: "600", marginBottom: "8px", color: "#6b7280" }}>Due</h3>
+                <p style={{ margin: 0 }}>{formatDate(invoice.due_at)}</p>
+              </div>
+            </div>
+            {invoice.status === "DRAFT" && (
+              <div style={{ marginBottom: "24px" }}>
+                <button type="button" className="btn-ghost" onClick={startEditingDraft}>
+                  Edit amount &amp; dates
+                </button>
+              </div>
+            )}
+          </>
+        )}
 
 
         {/* Payment Form */}

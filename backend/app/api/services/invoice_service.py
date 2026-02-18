@@ -5,7 +5,7 @@ from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import selectinload
 
 from app.db.models.invoice import Invoice, InvoiceStatus
-from app.api.schemas.invoice import InvoiceCreate
+from app.api.schemas.invoice import InvoiceCreate, InvoiceDraftUpdate
 
 
 def create_invoice(db: Session, invoice_data: InvoiceCreate) -> Invoice:
@@ -28,6 +28,35 @@ def get_invoice(db: Session, invoice_id: int) -> Optional[Invoice]:
 class InvoiceError(Exception):
     """Invoice operation error"""
     pass
+
+
+def update_invoice(db: Session, invoice_id: int, data: InvoiceDraftUpdate) -> Invoice:
+    """Update a DRAFT invoice's amount, currency, and/or dates. Only DRAFT can be updated."""
+    invoice = db.scalar(
+        select(Invoice)
+        .where(Invoice.id == invoice_id)
+        .options(selectinload(Invoice.payments))
+    )
+    if not invoice:
+        raise InvoiceError(f"Invoice {invoice_id} not found")
+    if invoice.status != InvoiceStatus.DRAFT:
+        raise InvoiceError("Only draft invoices can be updated")
+    update_data = data.model_dump(exclude_unset=True)
+    if not update_data:
+        db.refresh(invoice)
+        return invoice
+    if "due_at" in update_data and "issued_at" in update_data:
+        if update_data["due_at"] < update_data["issued_at"]:
+            raise InvoiceError("Due date must be on or after issued date")
+    elif "due_at" in update_data and update_data["due_at"] < invoice.issued_at:
+        raise InvoiceError("Due date must be on or after issued date")
+    elif "issued_at" in update_data and invoice.due_at < update_data["issued_at"]:
+        raise InvoiceError("Due date must be on or after issued date")
+    for key, value in update_data.items():
+        setattr(invoice, key, value)
+    db.commit()
+    db.refresh(invoice)
+    return invoice
 
 
 def post_invoice(db: Session, invoice_id: int) -> Invoice:

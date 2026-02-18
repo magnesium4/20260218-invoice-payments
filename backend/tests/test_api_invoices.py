@@ -182,6 +182,33 @@ def test_delete_invoice_pending_rejected(client, sample_invoice):
     assert "draft" in response.json()["detail"].lower()
 
 
+def test_update_invoice_success(client, sample_draft_invoice):
+    """Test PATCH updates a DRAFT invoice amount and dates"""
+    payload = {
+        "amount": "750.00",
+        "currency": "EUR",
+        "issued_at": "2025-01-01T00:00:00Z",
+        "due_at": "2025-02-15T00:00:00Z",
+    }
+    response = client.patch(f"/invoices/{sample_draft_invoice.id}", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["amount"] == "750.00"
+    assert data["currency"] == "EUR"
+    assert "2025-01-01" in data["issued_at"]
+    assert "2025-02-15" in data["due_at"]
+
+
+def test_update_invoice_pending_rejected(client, sample_invoice):
+    """Test PATCH on PENDING invoice returns 400"""
+    response = client.patch(
+        f"/invoices/{sample_invoice.id}",
+        json={"amount": "500.00"}
+    )
+    assert response.status_code == 400
+    assert "draft" in response.json()["detail"].lower()
+
+
 def test_list_invoices_filter_by_customer(client, sample_invoice, sample_customer):
     """Test filtering invoices by customer_id"""
     response = client.get(f"/invoices?customer_id={sample_customer.id}")

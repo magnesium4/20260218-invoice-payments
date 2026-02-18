@@ -5,12 +5,13 @@ from app.api.services.invoice_service import (
     create_invoice,
     get_invoice,
     get_all_invoices,
+    update_invoice,
     post_invoice,
     void_invoice,
     delete_invoice,
     InvoiceError,
 )
-from app.api.schemas.invoice import InvoiceCreate
+from app.api.schemas.invoice import InvoiceCreate, InvoiceDraftUpdate
 from app.db.models.invoice import InvoiceStatus
 
 
@@ -125,6 +126,29 @@ def test_delete_invoice_pending_rejected(db_session, sample_invoice):
     """Test delete_invoice raises for PENDING invoice"""
     with pytest.raises(InvoiceError) as exc_info:
         delete_invoice(db_session, sample_invoice.id)
+    assert "draft" in str(exc_info.value).lower()
+
+
+def test_update_invoice_success(db_session, sample_draft_invoice):
+    """Test update_invoice updates amount and dates for DRAFT"""
+    data = InvoiceDraftUpdate(
+        amount="750.00",
+        currency="EUR",
+        issued_at=datetime(2025, 1, 1, tzinfo=timezone.utc),
+        due_at=datetime(2025, 2, 15, tzinfo=timezone.utc),
+    )
+    result = update_invoice(db_session, sample_draft_invoice.id, data)
+    assert result.amount == 750.00
+    assert result.currency == "EUR"
+    db_session.refresh(sample_draft_invoice)
+    assert sample_draft_invoice.amount == 750.00
+
+
+def test_update_invoice_pending_rejected(db_session, sample_invoice):
+    """Test update_invoice raises for PENDING invoice"""
+    data = InvoiceDraftUpdate(amount="500.00")
+    with pytest.raises(InvoiceError) as exc_info:
+        update_invoice(db_session, sample_invoice.id, data)
     assert "draft" in str(exc_info.value).lower()
 
 

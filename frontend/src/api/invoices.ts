@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { Invoice, InvoiceCreate, Payment, PaymentCreate, InvoiceStatus } from "./types";
+import type { Invoice, InvoiceCreate, InvoiceDraftUpdate, Payment, PaymentCreate, InvoiceStatus } from "./types";
 
 export async function getAllInvoices(params?: {
   status?: InvoiceStatus;
@@ -18,6 +18,11 @@ export async function createInvoice(payload: InvoiceCreate): Promise<Invoice> {
 
 export async function getInvoice(id: number): Promise<Invoice> {
   const { data } = await api.get<Invoice>(`/invoices/${id}`);
+  return data;
+}
+
+export async function updateInvoice(id: number, payload: InvoiceDraftUpdate): Promise<Invoice> {
+  const { data } = await api.patch<Invoice>(`/invoices/${id}`, payload);
   return data;
 }
 
