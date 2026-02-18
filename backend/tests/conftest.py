@@ -72,3 +72,23 @@ def sample_invoice(db_session, sample_customer):
     db_session.commit()
     db_session.refresh(invoice)
     return invoice
+
+
+@pytest.fixture
+def sample_draft_invoice(db_session, sample_customer):
+    """Create a DRAFT invoice for testing post endpoint"""
+    from app.db.models.invoice import Invoice, InvoiceStatus
+    from datetime import datetime, timezone
+    
+    invoice = Invoice(
+        customer_id=sample_customer.id,
+        amount=500.00,
+        currency="EUR",
+        issued_at=datetime.now(timezone.utc),
+        due_at=datetime.now(timezone.utc),
+        status=InvoiceStatus.DRAFT
+    )
+    db_session.add(invoice)
+    db_session.commit()
+    db_session.refresh(invoice)
+    return invoice
