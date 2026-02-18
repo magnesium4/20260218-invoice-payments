@@ -44,6 +44,12 @@ def record_payment(
     if not invoice:
         raise PaymentError(f"Invoice {invoice_id} not found")
     
+    # Business rule: Drafts cannot accept payments before being posted
+    if invoice.status == InvoiceStatus.DRAFT:
+        raise PaymentError(
+            "Drafts cannot accept payments before being posted."
+        )
+
     # Business rule: Cannot pay VOID or PAID invoices
     if invoice.status in (InvoiceStatus.VOID, InvoiceStatus.PAID):
         raise PaymentError(
@@ -73,10 +79,6 @@ def record_payment(
         paid_at=paid_at
     )
     db.add(payment)
-    
-    # Business rule: First payment moves DRAFT → PENDING
-    if invoice.status == InvoiceStatus.DRAFT:
-        invoice.status = InvoiceStatus.PENDING
 
     # Business rule: Update invoice status to PAID if fully paid
     new_total_paid = total_paid + new_payment_amount
